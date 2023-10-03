@@ -1,29 +1,35 @@
 
 const express = require("express");
+const cookieParser = require("cookie-parser");
 const app = express();
 const PORT = 8080; // default port 8080
 
 // configuration of express app
 app.set("view engine", "ejs");
 
-// POST requests are sent as a BUFFER (great for transmitting data but isnt readable without this)
-app.use(express.urlencoded({ extended: true})); // this is middleware
+// this is middleware
+app.use(express.urlencoded({ extended: true})); 
+
+// allowing cookies to be stored and used by the server
+app.use(cookieParser());
 
 // random string generator to simulate tinyURL
 function generateRandomString() {    
   let result = '';
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-for (let x = 0; x < 6; x++) {
-  result += characters.charAt(Math.floor(Math.random() * characters.length));
-}
-
-return result;
+  for (let x = 0; x < 6; x++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  
+  return result;
 }; 
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xk": "http://www.google.com"
 };
+
+// POST requests are sent as a BUFFER (great for transmitting data but isnt readable without this)
 
 // redirects to a page with the shortURLId
 app.post("/urls", (req, res) => {
@@ -46,7 +52,7 @@ app.post('/urls/:id/delete', (req, res) => {
   res.redirect('/urls');
 });
 
-// 
+// replaces the old longURL with the new input URL - new Edit feature/page
 app.post('/urls/:id', (req, res) => {
   const idToUpdate = req.params.id;
   const newLongURL = req.body.longURL;
@@ -54,6 +60,13 @@ app.post('/urls/:id', (req, res) => {
   urlDatabase[idToUpdate] = newLongURL;
 
   res.redirect('/urls');
+});
+
+// allows user to input their username (and cookies to store that data for next time)
+app.post('/login', (req, res) => {
+  const username = req.body.username;
+  res.cookie("username", username);
+  res.redirect("/urls");
 });
 
 // redirect any request to ("u/:id") to its longURL
