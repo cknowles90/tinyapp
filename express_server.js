@@ -28,8 +28,8 @@ const urlDatabase = {
 // redirects to a page with the shortURLId
 app.post("/urls", (req, res) => {
   const shortURLId = generateRandomString();
-  const longURL = req.params.id;
-  urlDatabase[req.body.longURL] = longURL;
+  const longURL = req.body.longURL;
+  urlDatabase[shortURLId] = longURL;
   res.redirect(`/urls/${shortURLId}`);
 });
 
@@ -39,9 +39,20 @@ app.post('/urls/:id', (req, res) => {
   res.render('urls_show.ejs', templateVars)
 });
 
+// deletes the stored URL id, longURL and shortID URL from the urlDatabase
 app.post('/urls/:id/delete', (req, res) => {
   const idToDelete = req.params.id;
   delete urlDatabase[idToDelete]; 
+  res.redirect('/urls');
+});
+
+// 
+app.post('/urls/:id', (req, res) => {
+  const idToUpdate = req.params.id;
+  const newLongURL = req.body.longURL;
+
+  urlDatabase[idToUpdate] = newLongURL;
+
   res.redirect('/urls');
 });
 
