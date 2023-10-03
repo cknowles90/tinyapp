@@ -18,10 +18,19 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+app.get("/urls/:id", (req, res) => {
+  const templateVars = { id: "b2xVn2", longURL: "http://www.lighthouselabs.ca" };
+  res.render("urls_show", templateVars);
+});
+
+// app.get("?urls/:id:", (req, res) => {
+//   const templateVars = { id: "9sm5xk" , longURL: "http://www.google.com" };
+//   res.render("urls_show", templateVars);
+// });
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
-
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
