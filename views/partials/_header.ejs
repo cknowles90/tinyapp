@@ -20,9 +20,18 @@
       </div> 
     </div>
     <div>
-    <form method="POST" action="/login">
-      <input id="question" type="text" name="question" size="20" value="Username"/>
-      <button type="submit" class="btn btn-outline-primary">Login</button>
+      <div class="ml-auto">
+    <% if (username) { %>
+        <span class="navbar-text">Logged in as: <%= username %></span>
+        <form method="POST" action="/logout">
+          <button type="submit" class="btn btn-outline-danger">Logout</button>
+        </form>
+    <% } else { %>
+      <form method="POST" action="/login">
+        <input id="username" type="text" name="username" size="20" placeholder="Username" value="<%= username %>"/>
+        <button type="submit" class="btn btn-outline-dark">Login</button>
+      </form>
+      <% } %>
     </div>
   </nav>
 </header>

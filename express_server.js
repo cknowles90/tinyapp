@@ -69,15 +69,20 @@ app.post('/login', (req, res) => {
   res.redirect("/urls");
 });
 
+// GET requests information/data from the browser and servers, and returns to the client
+
 // redirect any request to ("u/:id") to its longURL
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
 });
 
-// new route handler for /urls
+// new route handler for /urls - Added USERNAME and cookies
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { 
+    urls: urlDatabase,
+    username: req.cookies["username"]
+  };
   res.render("urls_index", templateVars);
 });
 
@@ -87,7 +92,10 @@ app.get("/urls/new", (req, res) => {
 });
 // new route for URL tinyIDs
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id]};
+  const templateVars = { 
+    id: req.params.id, 
+    longURL: urlDatabase[req.params.id],
+  };
   res.render("urls_show", templateVars);
 });
 
