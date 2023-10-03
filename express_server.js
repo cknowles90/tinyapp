@@ -1,9 +1,7 @@
-// Pair programmed with Stephen Fraser - W3D1-W3D4 - @stephen-fraser : github/stephen-fraser
 
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
-
 
 // configuration of express app
 app.set("view engine", "ejs");
@@ -18,6 +16,7 @@ function generateRandomString() {
 for (let x = 0; x < 6; x++) {
   result += characters.charAt(Math.floor(Math.random() * characters.length));
 }
+
 return result;
 }; 
 
@@ -25,10 +24,6 @@ const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xk": "http://www.google.com"
 };
-
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
 
 // redirects to a page with the shortURLId
 app.post("/urls", (req, res) => {
@@ -42,7 +37,13 @@ app.post("/urls", (req, res) => {
 app.post('/urls/:id', (req, res) => {
   const templateVars = {id: req.params.id, longURL: urlDatabase[req.params.id]}
   res.render('urls_show.ejs', templateVars)
-})
+});
+
+app.post('/urls/:id/delete', (req, res) => {
+  const idToDelete = req.params.id;
+  delete urlDatabase[idToDelete]; 
+  res.redirect('/urls');
+});
 
 // redirect any request to ("u/:id") to its longURL
 app.get("/u/:id", (req, res) => {
@@ -84,11 +85,14 @@ app.get("/hello", (req, res) => {
 app.get("/set", (req, res) => {
   const a = 1;
   res.send(`a = ${a}`);
- });
+});
 
 // fetch path created to show erro that you can't access value of a because of reference/scope error
 app.get("/fetch", (req, res) => {
-res.send(`a = ${a}`);
+  res.send(`a = ${a}`);
 });
 
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
+});
 
