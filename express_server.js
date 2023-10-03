@@ -1,3 +1,5 @@
+// Pair programmed with Stephen Fraser - W3D1-W3D4 - @stephen-fraser : github/stephen-fraser
+
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
@@ -8,8 +10,8 @@ app.set("view engine", "ejs");
 
 // POST requests are sent as a BUFFER (great for transmitting data but isnt readable without this)
 app.use(express.urlencoded({ extended: true})); // this is middleware
-// random string generator to simulate tinyURL
 
+// random string generator to simulate tinyURL
 function generateRandomString() {    
   let result = '';
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -28,6 +30,7 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
+// redirects to a page with the shortURLId
 app.post("/urls", (req, res) => {
   const shortURLId = generateRandomString();
   const longURL = req.params.id;
@@ -36,12 +39,10 @@ app.post("/urls", (req, res) => {
 });
 
 // logs the POST request body to the console and responds 
-// app.post("/urls/:id", (req, res) => {
-//   const shortURLId = generateRandomString();
-//   const longURL = req.body.longURL;
-//   urlDatabase[req.body.longURL] = longURL;
-//   res.redirect(`/urls/${shortURLId}`);
-// });
+app.post('/urls/:id', (req, res) => {
+  const templateVars = {id: req.params.id, longURL: urlDatabase[req.params.id]}
+  res.render('urls_show.ejs', templateVars)
+})
 
 // redirect any request to ("u/:id") to its longURL
 app.get("/u/:id", (req, res) => {
