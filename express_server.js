@@ -21,6 +21,17 @@ app.use(cookieParser()); // creates req.cookies
 // random string generator to simulate tinyURL
 const generateRandomString = (length) => Math.random().toString(36).substring(2, (length + 2)); // generates a random 6 character string
 
+// function to help get a user by email
+const getUserByEmail = (email) => {
+  for (const userId in users)  {
+    const user = users[userId];
+    if (user.email === email) {
+      return user;
+    }
+  }
+  return null;
+}
+
 // databases for URLs and usernames
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -110,19 +121,11 @@ app.post('/register', (req, res) => {
   const password = req.body.password;
 
   if (!email || !password) {
-    res.status(400).send('please input a valid email and/or password');
+    res.status(400).send('Please enter a valid email and/or password');
   }
   
-  let foundUser = null;
-  
-  for (const userId in users) {
-    const user = users[userId];
-    if (user.email === email) {
-      foundUser = user;
-    }
-  }
-
-  if (foundUser) {
+  const userExists = getUserByEmail(email);
+  if (userExists) {
     return res.status(400).send('Error: email is already registered');
   }
   
