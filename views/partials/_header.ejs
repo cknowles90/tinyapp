@@ -17,6 +17,7 @@
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
         <a class="nav-item nav-link" href="/register">Register</a>
+        <a class="nav-item nav-link" href="/login">Login</a>
       </div> 
     </div>
     <div>
@@ -25,11 +26,6 @@
         <form method="POST" action="/logout">
           <span class="navbar-text">Logged in as: <%= user.email %></span><button type="submit" class="btn btn-outline-danger ml-2">Logout</button>
         </form>
-    <% } else { %>
-      <form method="POST" action="/login">
-        <input id="username" type="text" name="username" size="20" placeholder="Username"/>
-        <button type="submit" class="btn btn-outline-dark">Login</button>
-      </form>
       <% } %>
     </div>
   </nav>

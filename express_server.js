@@ -187,6 +187,13 @@ app.get("/register", (req, res) => {
   res.render("urls_register", templateVars);
 });
 
+app.get('/login', (req, res) => {
+  const templateVars = {
+    user: users[req.cookies["user.id"]]
+  };
+  res.render("urls_login", templateVars);
+});
+
 // // get /protected
 // app.get('/protected', (req, res) => {
 
