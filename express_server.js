@@ -69,6 +69,15 @@ app.post('/login', (req, res) => {
   res.redirect("/urls");
 });
 
+// gives a logout endpoint and clears the username cookie - redirects back to /urls
+app.post('/logout', (req, res) => {
+  res.clearCookie("username");
+  res.redirect("/urls");
+});
+
+
+
+
 // GET requests information/data from the browser and servers, and returns to the client
 
 // redirect any request to ("u/:id") to its longURL
@@ -88,13 +97,18 @@ app.get("/urls", (req, res) => {
 
 // new route for /urls/new - the form
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {
+    username: req.cookies["username"]
+  };
+  res.render("urls_new", templateVars);
 });
+
 // new route for URL tinyIDs
 app.get("/urls/:id", (req, res) => {
   const templateVars = { 
     id: req.params.id, 
     longURL: urlDatabase[req.params.id],
+    username: req.cookies["username"]
   };
   res.render("urls_show", templateVars);
 });
