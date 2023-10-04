@@ -1,28 +1,37 @@
+// TINY APP MINI PROJECT - W3D1 to W3D4 - html, ejs, JS (server) -- @cknowles90 : github/cknowles90 //
+
 
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const app = express();
 const PORT = 8080; // default port 8080
+const morgan = require('morgan');
 
 // configuration of express app
 app.set("view engine", "ejs");
 
 // this is middleware
-app.use(express.urlencoded({ extended: true})); 
+app.use(express.urlencoded({ extended: true})); // creates req.body vs (false)???
+app.use(morgan('dev')); // (req, res, next) vs ('tiny')???
+// morgan is middleware to test URL/GET/POST connections/errors
 
 // allowing cookies to be stored and used by the server
-app.use(cookieParser());
+app.use(cookieParser()); // creates req.cookies
+
 
 // random string generator to simulate tinyURL
-function generateRandomString() {    
-  let result = '';
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (let x = 0; x < 6; x++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
+
+const generateRandomString = Math.random().toString(36).substring(2, 8); // generates a random 6 character string
+
+// const generateRandomString = function() {    
+//   let result = '';
+//   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+//   for (let x = 0; x < 6; x++) {
+//     result += characters.charAt(Math.floor(Math.random() * characters.length));
+//   }
   
-  return result;
-}; 
+//   return result;
+// }; 
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -75,6 +84,49 @@ app.post('/logout', (req, res) => {
   res.redirect("/urls");
 });
 
+// registration request for email and password
+app.post('/register', (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  res.cookie("email", email);
+
+  if (!email || !password) {
+    res.render('register');
+
+    res.status(400).send('please input a valid email and/or password');
+  } 
+
+  let foundUser = null;
+
+  for (const userId in user) {
+    const user = user[userId];
+    if (user.email === email) {
+      foundUser = user;
+    }
+  }
+  if (foundUser) {
+    return res.status(400).send('Error: email is already registered');
+  }
+
+  const id = Math.random().toString(36).substring(2, 6); // creates a 4 random character string
+
+  const user = {
+    id: id,
+    email: email,
+    password: password
+  };
+
+  user[id] = user;
+  console.log(users);
+
+  // if (foundUser.password !== password) {
+  //   res.status(400).send('Error: email and/or password does not match');
+  // }
+  res.cookie('userId', foundUser.id);
+
+  res.redirect("/login");
+});
 
 
 
@@ -113,8 +165,9 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-app.get("/", (req, res) => {
-  res.send("Hello!");
+// new registration page
+app.get("/register", (req, res) => {
+  res.render("register");
 });
 
 // adds JSON string that reprents the entire urlDatabase objects at time of request
@@ -122,21 +175,27 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-// displays HTML content that the /hello path responds with
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
+// get /protected
+app.get('/protected', (req, res) => {
+
+  const userId = req.cookies.userId
+
+  if (!userId) {
+    return res.status(401).send("Please log in to view this page")
+  }
+  
+  const user = user[userId];
+  const templateVars = {
+    email: user.email
+  };
+
+  res.render('protected', templateVars);
 });
 
-// set path created to display scope
-app.get("/set", (req, res) => {
-  const a = 1;
-  res.send(`a = ${a}`);
+app.get("/", (req, res) => {
+  res.send("Hello!");
 });
 
-// fetch path created to show erro that you can't access value of a because of reference/scope error
-app.get("/fetch", (req, res) => {
-  res.send(`a = ${a}`);
-});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
