@@ -95,10 +95,14 @@ app.post('/logout', (req, res) => {
 
 // redirects to a page with the shortURLId
 app.post("/urls", (req, res) => {
+  if (!req.cookies["user.id"]) { // cheeky hyperlink within message to redirect to /register page. Thank-you stackOverflow and html in-line CSS;
+    return res.status(400).send(`<center><a href="/register">Join Us!><br>If you want Tiny URLs...</a></center>`)
+  } else {
   const shortURLId = generateRandomString(6);
   const longURL = req.body.longURL;
   urlDatabase[shortURLId] = longURL;
   res.redirect(`/urls/${shortURLId}`);
+}
 });
 
 // registration request for email and password
@@ -144,15 +148,24 @@ app.get("/urls", (req, res) => {
 
 // new route for /urls/new - the form
 app.get("/urls/new", (req, res) => {
+  if (!req.cookies["user.id"]) {
+    res.redirect("/login");
+  } else {
   const templateVars = {
     user: users[req.cookies["user.id"]]
   };
   res.render("urls_new", templateVars);
+  }
 });
 
 // redirect any request to ("u/:id") to its longURL
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
+
+  if (!longURL) {
+    const errorMessage = "Invalid Tiny URL.";
+    return res.status(404).render("error", { errorMessage });
+  }
   res.redirect(longURL);
 });
 
@@ -168,18 +181,30 @@ app.get("/urls/:id", (req, res) => {
 
 // new registration page
 app.get("/register", (req, res) => {
+  if (req.cookies["user.id"]) {
+    res.redirect("/urls");
+  } else {
   const templateVars = {
     user: users[req.cookies["user.id"]]
   };
   res.render("urls_register", templateVars);
+  }
 });
 
 app.get('/login', (req, res) => {
+  if (req.cookies["user.id"]) {
+    res.redirect("/urls");
+  } else {
   const templateVars = {
     user: users[req.cookies["user.id"]]
   };
   res.render("urls_login", templateVars);
+  }
 });
+
+/*
+return res.status(403).send(`User ID and/or email input is invalid. Please check your spelling or <a href="/register>Register Now!</a>`);
+*/
 
 // // get /protected
 // app.get('/protected', (req, res) => {
