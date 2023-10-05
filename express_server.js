@@ -22,7 +22,7 @@ app.use(cookieParser()); // creates req.cookies
 const generateRandomString = (length) => Math.random().toString(36).substring(2, (length + 2)); // generates a random 6 character string
 
 // function to help get a user by email
-const getUserByEmail = (email) => {
+const getUserByEmail = (users, email) => {
   for (const userId in users)  {
     const user = users[userId];
     if (user.email === email) {
@@ -30,7 +30,7 @@ const getUserByEmail = (email) => {
     }
   }
   return null;
-}
+};
 
 // databases for URLs and usernames
 const urlDatabase = {
@@ -77,33 +77,20 @@ app.post('/urls/:id', (req, res) => {
 
 // allows user to input their username (and cookies to store that data for next time)
 app.post('/login', (req, res) => {
-  const users = req.body.users;
+  const user = getUserByEmail(users, req.body.email)
 
-  if (!users) {
-    return res.status(400).send("Username does not exist");
+  if (!user || user.password !== req.body.password) {
+    return res.status(403).send("Incorrect email and/or password");
   }
 
-  let foundUser = null;
-
-  for (const userId of users) {
-    const user = users[userId];
-    if (users.userId === user) {
-      found = user;
-    }
-  }
-  if (!foundUser) {
-    return res.status(400).send("Username does not exist because we couldn't find them!");
-  }
-
-  res.cookie("users", users);
-  res.cookie('user.id', foundUser.id);
+  res.cookie('user.id', user.id);
   res.redirect("/urls");
 });
 
 // gives a logout endpoint and clears the username cookie - redirects back to /urls
 app.post('/logout', (req, res) => {
-  res.clearCookie("users");
-  res.redirect("/urls");
+  res.clearCookie("user.id");
+  res.redirect("/login");
 });
 
 // redirects to a page with the shortURLId
@@ -124,7 +111,7 @@ app.post('/register', (req, res) => {
     res.status(400).send('Please enter a valid email and/or password');
   }
   
-  const userExists = getUserByEmail(email);
+  const userExists = getUserByEmail(users, email);
   if (userExists) {
     return res.status(400).send('Error: email is already registered');
   }
