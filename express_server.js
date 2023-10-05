@@ -4,6 +4,8 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const morgan = require('morgan');
 
+const bcrypt = require("bcryptjs");
+
 const app = express();
 const PORT = 8080; // default port 8080
 
@@ -19,6 +21,15 @@ app.use(morgan('dev')); // (req, res, next) vs ('tiny')???
 
 // random string generator to simulate tinyURL
 const generateRandomString = (length) => Math.random().toString(36).substring(2, (length + 2)); // generates a random 6 character string
+
+// auto-generating a salt and hash for password encryption using bcryptjs
+
+// converting passwords to hash
+let password1 = '123454321'
+const hash1 = bcrypt.hashSync(password1, 10);
+
+let password2 = 'password'
+const hash2 = bcrypt.hashSync(password2, 10);
 
 // function to help get a user by email
 const getUserByEmail = (users, email) => {
@@ -59,12 +70,12 @@ const urlDatabase = {
 const users = { b2xVn2: {
   id: "b2xVn2",
   email: "user@example.com",
-  password: "123454321",
+  password: hash1,
 },
 e9m5xk: {
   id: "e9m5xk",
   email: "user2@example.com",
-  password: "password",
+  password: hash2,
 },
 };
 
@@ -210,15 +221,17 @@ app.post('/urls/:id/delete', (req, res) => {
 // allows user to input their username (and cookies to store that data for next time)
 app.post('/login', (req, res) => {
   const user = getUserByEmail(users, req.body.email)
+  const passwordsMatch = bcrypt.compareSync(req.body.password, user.password);
 
-  if (!user || user.password !== req.body.password) {
-    return res.status(403).send("Incorrect email and/or password");
+  if (!user || !passwordsMatch) {
+    return res.status(403).send("Incorrect email and/or password - this error");
   }
 
   res.cookie('user.id', user.id);
   res.redirect("/urls");
 });
 
+// redirects user from login page if they are already logged in
 app.get('/login', (req, res) => {
   if (req.cookies["user.id"]) {
     res.redirect("/urls");
@@ -240,12 +253,12 @@ app.post('/logout', (req, res) => {
 app.post('/register', (req, res) => {
 
   const email = req.body.email;
-  const password = req.body.password;
+  const password = bcrypt.hashSync(req.body.password, 10);
 
   if (!email || !password) {
     res.status(400).send('Please enter a valid email and/or password');
   }
-  
+
   const userExists = getUserByEmail(users, email);
   if (userExists) {
     return res.status(400).send('Error: email is already registered');
@@ -262,10 +275,9 @@ app.post('/register', (req, res) => {
   users[id] = user;
 
   res.cookie("user.id", user.id);
-  res.on("end", () => {
-    res.redirect("/urls");
+
+  res.redirect("/urls");
   });
-});
 
 // new registration page
 app.get("/register", (req, res) => {
