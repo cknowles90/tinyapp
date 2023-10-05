@@ -1,7 +1,7 @@
 // TINY APP MINI PROJECT - W3D1 to W3D4 - html, ejs, JS (server) -- @cknowles90 : github/cknowles90 //
 
 const express = require("express");
-const cookieParser = require("cookie-parser");
+const cookieSession = require("cookie-session");
 const morgan = require('morgan');
 
 const bcrypt = require("bcryptjs");
@@ -15,9 +15,12 @@ app.set("view engine", "ejs");
 // this is middleware
 // allowing cookies to be stored and used by the server
 // morgan is middleware to test URL/GET/POST connections/errors
-app.use(cookieParser()); // creates req.cookies
 app.use(express.urlencoded({ extended: true})); // creates req.body vs (false)???
 app.use(morgan('dev')); // (req, res, next) vs ('tiny')???
+app.use(cookieSession({
+  name: 'session',
+  keys: ['qws2ef2sd8'],
+}));
 
 // random string generator to simulate tinyURL
 const generateRandomString = (length) => Math.random().toString(36).substring(2, (length + 2)); // generates a random 6 character string
@@ -25,11 +28,11 @@ const generateRandomString = (length) => Math.random().toString(36).substring(2,
 // auto-generating a salt and hash for password encryption using bcryptjs
 
 // converting passwords to hash
-let password1 = '123454321'
-const hash1 = bcrypt.hashSync(password1, 10);
+let passwordOne = '123454321'
+let passwordTwo = 'password'
 
-let password2 = 'password'
-const hash2 = bcrypt.hashSync(password2, 10);
+const hashed1 = bcrypt.hashSync(passwordOne, 10);
+const hashed2 = bcrypt.hashSync(passwordTwo, 10);
 
 // function to help get a user by email
 const getUserByEmail = (users, email) => {
@@ -66,18 +69,28 @@ const urlDatabase = {
 },
 };
 
+
 // new updated database for the users info: id, email, password
 const users = { b2xVn2: {
   id: "b2xVn2",
   email: "user@example.com",
-  password: hash1,
+  password: hashed1,
 },
 e9m5xk: {
   id: "e9m5xk",
   email: "user2@example.com",
-  password: hash2,
+  password: hashed2,
 },
 };
+
+// Now `users` only contains the hardcoded users
+for (const userId in users) {
+  if (!(userId in users)) {
+    delete users[userId];
+  }
+}
+console.log(users);
+
 
 
 // POST requests are sent as a BUFFER (great for transmitting data but isnt readable without this)
@@ -87,7 +100,8 @@ e9m5xk: {
 // redirects to a page with the shortURLId
 app.post("/urls", (req, res) => {
   console.log("POST /urls route handler called");
-  const userID = req.cookies["user.id"];
+  const userID = req.session.user ? req.session["user.id"] : null;
+  console.log("Cookies:", req.cookies, req.session);
 
   if (!userID) { // cheeky hyperlink within message to redirect to /register page. Thank-you stackOverflow and html in-line CSS;
     return res.status(400).send(`<center><a href="/register">Join Us!</a><br>If you want Tiny URLs...</center>`)
@@ -98,7 +112,10 @@ app.post("/urls", (req, res) => {
   console.log("shortURLId:", shortURLId);
   console.log("longURL:", longURL);
 
-  urlDatabase[shortURLId] = longURL;
+  urlDatabase[shortURLId] = {
+    longURL: longURL,
+    userID: userID,
+  };
 
   console.log("urlDatabase:", urlDatabase);
   res.redirect(`/urls/${shortURLId}`);
@@ -107,7 +124,9 @@ app.post("/urls", (req, res) => {
 // new route handler for /urls - Added USERNAME and cookies
 app.get("/urls", (req, res) => {
   
-  const userID = req.cookies["user.id"];
+  const userID = req.session["user.id"];
+  console.log("UserID:", userID);
+
   const userUrls = getUserUrls(urlDatabase, userID);
   console.log("userURLs:", userUrls);
   
@@ -122,11 +141,11 @@ app.get("/urls", (req, res) => {
 
 // new route for /urls/new - the form
 app.get("/urls/new", (req, res) => {
-  if (!req.cookies["user.id"]) {
+  if (!req.session["user.id"]) {
     res.redirect("/login");
   } else {
   const templateVars = {
-    user: users[req.cookies["user.id"]]
+    user: users[req.session["user.id"]]
   };
   res.render("urls_new", templateVars);
   }
@@ -135,12 +154,15 @@ app.get("/urls/new", (req, res) => {
 // replaces the old longURL with the new input URL - new Edit feature/page
 app.post('/urls/:id', (req, res) => {
 
-  const userID = req.cookies["user.id"];
+  const userID = req.session["user.id"];
   const user = users[userID];
+  console.log("User ID:", userID);
+  console.log("User:", user);
 
   const id = req.params.id;
   const newLongURL = req.body.newLongURL;
   const destinationURL = urlDatabase[id];
+  console.log("Destination URL:", destinationURL);
 
   if (!destinationURL) {
     return res.status(400).send("Invalid short URL");
@@ -151,6 +173,7 @@ app.post('/urls/:id', (req, res) => {
   }
 
   if (user.id !== destinationURL.userID) {
+    console.log("Desination URL and ID:", destinationURL.userID);
     return res.status(401).send("Access Denied: This URL does not belong to you. Nice try!")
   }
   
@@ -162,8 +185,10 @@ app.post('/urls/:id', (req, res) => {
 // new route for URL tinyIDs
 app.get("/urls/:id", (req, res) => {
 
-  const userID = req.cookies["user.id"];
+  const userID = req.session["user.id"];
+  console.log("User ID:", req.session["user.id"]);
   const user = users[userID];
+  console.log("User:", user);
 
   if (!user) {
     return res.status(400).send("You must be logged in to access this content");
@@ -176,7 +201,7 @@ app.get("/urls/:id", (req, res) => {
   const templateVars = { 
     id: req.params.id, 
     longURL: urlDatabase[req.params.id].longURL,
-    user: users[req.cookies["user.id"]]
+    user: users[req.session["user.id"]]
   };
   res.render("urls_show", templateVars);
 });
@@ -195,7 +220,7 @@ app.get("/u/:id", (req, res) => {
 // deletes the stored URL id, longURL and shortID URL from the urlDatabase
 app.post('/urls/:id/delete', (req, res) => {
 
-  const user = users[req.cookies['user.id']];
+  const user = users[req.session["user.id"]];
   const id = req.params.id;
   const destinationURL = urlDatabase[id];
 
@@ -215,29 +240,38 @@ app.post('/urls/:id/delete', (req, res) => {
 
   delete urlDatabase[idToDelete]; 
 
+  req.session = null;
   res.redirect('/urls');
 });
 
 // allows user to input their username (and cookies to store that data for next time)
 app.post('/login', (req, res) => {
-  const user = getUserByEmail(users, req.body.email)
+  const user = getUserByEmail(users, req.body.email);
   const passwordsMatch = bcrypt.compareSync(req.body.password, user.password);
-
-  if (!user || !passwordsMatch) {
-    return res.status(403).send("Incorrect email and/or password - this error");
+  console.log("Passwords Match:", passwordsMatch);
+  console.log("User logged in:", user.id);
+  
+  if (!user) {
+    console.log("User not found");
+    return res.status(403).send("Incorrect email and/or password");
   }
 
-  res.cookie('user.id', user.id);
+  if (!passwordsMatch) {
+    console.log("Passwords do not match");
+    return res.status(403).send("Incorrect email and/or password - this error");
+  }
+  req.session["user.id"] = user.id;
+  console.log("User logged in:", req.session["user.id"]);
   res.redirect("/urls");
 });
 
 // redirects user from login page if they are already logged in
 app.get('/login', (req, res) => {
-  if (req.cookies["user.id"]) {
+  if (req.session["user.id"]) {
     res.redirect("/urls");
   } else {
   const templateVars = {
-    user: users[req.cookies["user.id"]]
+    user: null
   };
   res.render("urls_login", templateVars);
   }
@@ -245,7 +279,7 @@ app.get('/login', (req, res) => {
 
 // gives a logout endpoint and clears the username cookie - redirects back to /urls
 app.post('/logout', (req, res) => {
-  res.clearCookie("user.id");
+  req.session = null;
   res.redirect("/login");
 });
 
@@ -274,26 +308,26 @@ app.post('/register', (req, res) => {
 
   users[id] = user;
 
-  res.cookie("user.id", user.id);
+  req.session["user.id"] = user.id;
 
   res.redirect("/urls");
   });
 
 // new registration page
 app.get("/register", (req, res) => {
-  if (req.cookies["user.id"]) {
+  if (req.session["user.id"]) {
     res.redirect("/urls");
   } 
 
   const templateVars = {
-    user: users[req.cookies["user.id"]]
+    user: users[req.session["user.id"]]
   };
   res.render("urls_register", templateVars);
 });
 
 app.get('/', (req, res) => {
 
-  if (!users[req.cookies['user.id']]) {
+  if (!users[req.session["user.id"]]) {
     res.redirect('/login');
   }
 
