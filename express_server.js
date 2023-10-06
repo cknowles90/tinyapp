@@ -3,6 +3,7 @@
 const express = require("express");
 const cookieSession = require("cookie-session");
 const morgan = require('morgan');
+const { getUserByEmail, getUserUrls } = require("./helpers");
 
 const bcrypt = require("bcryptjs");
 
@@ -27,35 +28,12 @@ const generateRandomString = (length) => Math.random().toString(36).substring(2,
 
 // auto-generating a salt and hash for password encryption using bcryptjs
 
-// converting passwords to hash
+// converting passwords to hash to use for cookie-sessions
 let passwordOne = '123454321'
 let passwordTwo = 'password'
 
 const hashed1 = bcrypt.hashSync(passwordOne, 10);
 const hashed2 = bcrypt.hashSync(passwordTwo, 10);
-
-// function to help get a user by email
-const getUserByEmail = (users, email) => {
-  for (const userId in users)  {
-    const user = users[userId];
-    if (user.email === email) {
-      return user;
-    }
-  }
-  return null;
-};
-
-// function similar to above - but to filter through urls associated with userID's
-const getUserUrls = (urlDatabase, userID) => {
-  const newUrls = {};
-
-  for (let url in urlDatabase) {
-    if (urlDatabase[url].userID === userID) {
-      newUrls[url] = urlDatabase[url];
-    }
-  };
-  return newUrls;
-};
 
 // databases for URLs and usernames
 const urlDatabase = {
@@ -68,7 +46,6 @@ const urlDatabase = {
     userID: "e9m5xk",
 },
 };
-
 
 // new updated database for the users info: id, email, password
 const users = { b2xVn2: {
@@ -100,14 +77,14 @@ console.log(users);
 // redirects to a page with the shortURLId
 app.post("/urls", (req, res) => {
   console.log("POST /urls route handler called");
-  const userID = req.session.user ? req.session["user.id"] : null;
-  console.log("Cookies:", req.cookies, req.session);
+  const userID = req.session["user.id"];
+  console.log("Cookies:", req.session);
 
   if (!userID) { // cheeky hyperlink within message to redirect to /register page. Thank-you stackOverflow and html in-line CSS;
-    return res.status(400).send(`<center><a href="/register">Join Us!</a><br>If you want Tiny URLs...</center>`)
+    return res.status(401).send(`<center><a href="/register">Join Us!</a><br>If you want Tiny URLs...</center>`)
   }
 
-  const shortURLId = generateRandomString(6);
+  let shortURLId = generateRandomString(6);
   const longURL = req.body.longURL;
   console.log("shortURLId:", shortURLId);
   console.log("longURL:", longURL);
@@ -133,7 +110,6 @@ app.get("/urls", (req, res) => {
   const templateVars = { 
     user: users[userID],
     urls: userUrls,
-    urlDatabase: urlDatabase,
   };
 
   res.render("urls_index", templateVars);
@@ -194,6 +170,10 @@ app.get("/urls/:id", (req, res) => {
     return res.status(400).send("You must be logged in to access this content");
   }
 
+  if (!urlDatabase[req.params.id]) {
+    return res.status(404).send("URL not found");
+  }
+
   if (user.id !== urlDatabase[req.params.id].userID) {
     return res.status(401).send("Access Denied: This URL does not belong to you!")
   }
@@ -247,19 +227,21 @@ app.post('/urls/:id/delete', (req, res) => {
 // allows user to input their username (and cookies to store that data for next time)
 app.post('/login', (req, res) => {
   const user = getUserByEmail(users, req.body.email);
-  const passwordsMatch = bcrypt.compareSync(req.body.password, user.password);
-  console.log("Passwords Match:", passwordsMatch);
-  console.log("User logged in:", user.id);
   
   if (!user) {
     console.log("User not found");
     return res.status(403).send("Incorrect email and/or password");
   }
+  
+  const passwordsMatch = bcrypt.compareSync(req.body.password, user.password);
+  console.log("Passwords Match:", passwordsMatch);
+  console.log("User logged in:", user.id);
 
   if (!passwordsMatch) {
     console.log("Passwords do not match");
     return res.status(403).send("Incorrect email and/or password - this error");
   }
+
   req.session["user.id"] = user.id;
   console.log("User logged in:", req.session["user.id"]);
   res.redirect("/urls");
@@ -271,7 +253,7 @@ app.get('/login', (req, res) => {
     res.redirect("/urls");
   } else {
   const templateVars = {
-    user: null
+    user: users[req.session["user.id"]]
   };
   res.render("urls_login", templateVars);
   }

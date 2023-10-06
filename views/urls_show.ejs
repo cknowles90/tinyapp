@@ -26,7 +26,7 @@
         <p class="card-title">Edit</p>
         <form method="POST" action="/urls/<%= id %>">
           <label for="question">New URL:</label>
-          <input id="question" type="text" name="question" size="20" value="<%= longURL %>"/>
+          <input id="question" type="text" name="question" size="20" placeholder="Enter a new URL" style="font-style: italic"/>
           <button type="submit" class="btn btn-primary">Submit</button>
         </form>
       </div>

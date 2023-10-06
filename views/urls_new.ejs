@@ -15,14 +15,14 @@
       crossorigin="anonymous"
     />
 
-    <title>New URL - TinyApp Example</title>
+    <title>New URL - Create your own TinyApp URL</title>
   </head>
 
   <body>
     <%- include('partials/_header') %>
-    
-    <main style="margin: 1em;">
-      <h3>Create TinyURL</h3>
+    <br><br><br>
+    <main style="display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 1em;">
+      <h3 style="font-size: 40px; font-weight: bold">Create your TinyURL</h3><br><br>
       <form class="form-inline" action="/urls" method="POST">
         <div class="form-group mb-2">
           <label for="longURL">Enter a URL:</label>

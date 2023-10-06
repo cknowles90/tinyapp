@@ -1,4 +1,22 @@
 
+bcrypt.genSalt(saltRounds, (err, salt) => {
+  if (err) {
+    return res.status(500).send("Error generating salt:", err)
+  }
+
+  bcrypt.hash(password, salt, (err, hash) => {
+    if (err) {
+      return res.status(500).send("Error hashing password:", err);
+    }
+    users[userId] = {
+      id: userId,
+      email: email,
+      password: hash,
+    };
+  });
+});
+
+
 
 
 
