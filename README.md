@@ -15,8 +15,10 @@ TinyApp allows users to see their stored shortURLs that they have created, and p
 
 ## Final Product
 
-!["screenshot description"](#)
-!["screenshot description"](#)
+!["heard the buzz around TinyApp? Dont miss out, join us!"](https://github.com/cknowles90/tinyapp/blob/main/docs/register_now_with_tinyApp.png?raw=true)
+!["login to start creating!"](https://github.com/cknowles90/tinyapp/blob/main/docs/login_to_create.png?raw=true)
+!["where the magic happens - the Tiny URL creation page"](https://github.com/cknowles90/tinyapp/blob/main/docs/create_your_own_tiny_url.png?raw=true)
+!["like the ID but not the URL? Edit your Tiny URLs anytime"](https://github.com/cknowles90/tinyapp/blob/main/docs/edit_your_unique_tiny_url.png?raw=true)
 
 ## Dependencies
 
